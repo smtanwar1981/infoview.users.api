@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Users.API.Custom;
+using Users.API.Services;
 
 namespace Users.API.Controllers;
 
@@ -8,87 +10,89 @@ namespace Users.API.Controllers;
 [ApiController]
 public class UsersController : ControllerBase
 {
-    private readonly UserContext _context;
-    private readonly ILogger<UsersController> _logger;
+    private readonly IUserService _userService;
 
-    public UsersController(UserContext context, ILogger<UsersController> logger)
+    public UsersController(IUserService userService)
     {
-        _context = context;
-        _logger = logger;
+        _userService = userService;
     }
 
-    // GET: api/Users
-    [HttpGet]
-    public async Task<IActionResult> GetUsers()
+    [HttpGet("getUsers")]
+    public async Task<IActionResult> GetUsers(CancellationToken token)
     {
-        var results = await _context.Users.Where(x => x.IsActive).ToListAsync();
+        var results = await _userService.GetAllUsers(token).ConfigureAwait(false);
+        if (results is null || results.Count == 0)
+        {
+            return NotFound("No user found.");
+        }
         return Ok(results);
     }
 
-    // GET: api/Users/...
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetUser(Guid id)
+    [HttpGet("getUserById/{id}")]
+    public async Task<IActionResult> GetUserById(string id, CancellationToken token)
     {
-        var result = await _context.Users.FindAsync(id);
-
-        if (result == null)
+        if (string.IsNullOrEmpty(id))
+        {
+            return BadRequest("User Id can not be null or empty.");
+        }
+        var result = await _userService.GetUserById(id, token).ConfigureAwait(false);
+        if (result is null)
         {
             return NotFound();
         }
-
         return Ok(result);
     }
 
-    // PUT: api/Users/... 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutUser(Guid id, User user)
+    [HttpPost("addNewUser")]
+    public async Task<IActionResult> AddUser(User request, CancellationToken token)
     {
-        if (id != user.Id)
+        if (request is null)
         {
             return BadRequest();
         }
 
-        _context.Entry(user).State = EntityState.Modified;
-         await _context.SaveChangesAsync();
-
-        return NoContent();
+        var result = await _userService.AddUser(request, token).ConfigureAwait(false);
+        if (result is null)
+        {
+            throw new CustomException("Unable to add user.");
+        }
+        return Ok(result);
     }
 
-    // POST: api/Users 
-    [HttpPost]
-    public async Task<IActionResult> PostUser(User user)
+    [HttpDelete("deleteUser")]
+    public async Task<IActionResult> DeleteUser(string Id, CancellationToken token)
     {
-        if (string.IsNullOrEmpty(user.FirstName))
+        if (string.IsNullOrEmpty(Id))
         {
-            return BadRequest("FirstName is required");
-        }
-        if (string.IsNullOrEmpty(user.LastName))
-        {
-            return BadRequest("LastName is required");
-        }
-        if (string.IsNullOrEmpty(user.Email))
-        { 
-            return BadRequest("Email is required");
-        }
-        else if (UserExists(user.Email))
-        {
-            return BadRequest("Email already exists");
+            return BadRequest("Id can not be null or empty.");
         }
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+        var result = await _userService.DeleteUser(Id, token).ConfigureAwait(false);
+        if (!result)
+        {
+            throw new CustomException("Unable to delete this user.");
+        }
+        return Ok(result);
     }
 
-    private bool UserIdExists(Guid id)
+    [HttpPut("updateUser")]
+    public async Task<IActionResult> UpdateUser(User request, CancellationToken token)
     {
-        return _context.Users.Any(x => x.Id == id);
-    }
+        if (request is null)
+        {
+            return BadRequest("Bad request");
+        }
+        if (string.IsNullOrEmpty(request.Id.ToString()) || request.Id == Guid.Empty)
+        {
+            return BadRequest("User id can not be empty or null.");
+        }
 
-    private bool UserExists(string email)
-    {
-        return _context.Users
-                .Any(x => x.Email.ToLowerInvariant() == email.ToLowerInvariant());
+        var result = await _userService.UpdateUser(request, token).ConfigureAwait(false);
+        if (!result)
+        {
+            return NotFound("User either not found or unable to update.");
+        }
+
+        return Ok(result);
     }
 }
