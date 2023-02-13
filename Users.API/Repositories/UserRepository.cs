@@ -14,7 +14,7 @@ namespace Users.API.Repositories
         ///<summary>description</summary>
         public async Task<List<User>> GetAllUsers(CancellationToken token)
         {
-            return await _dbContext.Users.Where(x => x.IsActive == true).ToListAsync(token).ConfigureAwait(false);
+            return await _dbContext.Users.ToListAsync(token).ConfigureAwait(false);
         }
 
         ///<summary>description</summary>

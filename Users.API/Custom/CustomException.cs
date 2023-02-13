@@ -1,10 +1,8 @@
 ﻿namespace Users.API.Custom
 {
-    public class CustomException : Exception
+    public class CustomException
     {
-        public CustomException(string message) : base(message)
-        {
-           
-        }
+        public string ErrorMessage { get; set; } = string.Empty;
+        public int ErrorCode { get; set; }
     }
 }

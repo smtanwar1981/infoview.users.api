@@ -38,24 +38,24 @@ namespace Users.API.Services
 
             if (string.IsNullOrEmpty(request.FirstName))
             {
-                throw new CustomException($"First name can not be empty.");
+                throw new Exception("First name can not be empty.");
             }
 
             if (string.IsNullOrEmpty(request.LastName))
             {
-                throw new CustomException($"Last name can not be empty.");
+                throw new Exception("Last name can not be empty.");
             }
 
             if (string.IsNullOrEmpty(request.Email))
             {
-                throw new CustomException($"Email can not be empty.");
+                throw new Exception("Email can not be empty.");
             }
 
             var addedUser = new User();
             var users = await _userRepository.GetAllUsers(token).ConfigureAwait(false);
             if (users != null && users.Count > 0 && users.Any(x => x.Email.ToLowerInvariant() == request.Email.ToLowerInvariant()))
             {
-                throw new CustomException($"Email already exist.");
+                throw new Exception("Email already exist.");
             }
 
             try
@@ -76,9 +76,14 @@ namespace Users.API.Services
             try
             {
                 var existingUser = await _userRepository.GetUserById(request.Id.ToString(), token);
+                var users = await _userRepository.GetAllUsers(token).ConfigureAwait(false);
                 if (existingUser is null)
                 {
                     return false;
+                }
+                else if (users != null && users.Count > 0 && users.Any(x => x.Id != request.Id && x.Email.ToLowerInvariant() == request.Email.ToLowerInvariant()))
+                {
+                    throw new Exception("Email already exist.");
                 }
                 else
                 {
@@ -108,7 +113,7 @@ namespace Users.API.Services
                 }
                 else
                 {
-                    return false;
+                    throw new Exception("User not found.");
                 }
             }
             catch

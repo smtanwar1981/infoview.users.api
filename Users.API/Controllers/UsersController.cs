@@ -51,12 +51,19 @@ public class UsersController : ControllerBase
             return BadRequest();
         }
 
-        var result = await _userService.AddUser(request, token).ConfigureAwait(false);
-        if (result is null)
+        try
         {
-            throw new CustomException("Unable to add user.");
+            var result = await _userService.AddUser(request, token).ConfigureAwait(false);
+            return Ok(result);
         }
-        return Ok(result);
+        catch (Exception ex)
+        {
+            return BadRequest(new CustomException
+            {
+                ErrorMessage = ex.Message,
+                ErrorCode = 400
+            });
+        }        
     }
 
     [HttpDelete("deleteUser")]
@@ -67,12 +74,19 @@ public class UsersController : ControllerBase
             return BadRequest("Id can not be null or empty.");
         }
 
-        var result = await _userService.DeleteUser(Id, token).ConfigureAwait(false);
-        if (!result)
+        try
         {
-            throw new CustomException("Unable to delete this user.");
+            var result = await _userService.DeleteUser(Id, token).ConfigureAwait(false);
+            return Ok(result);
         }
-        return Ok(result);
+        catch (Exception ex)
+        {
+            return BadRequest(new CustomException
+            {
+                ErrorMessage = ex.Message,
+                ErrorCode = 400
+            });
+        }        
     }
 
     [HttpPut("updateUser")]
@@ -87,12 +101,23 @@ public class UsersController : ControllerBase
             return BadRequest("User id can not be empty or null.");
         }
 
-        var result = await _userService.UpdateUser(request, token).ConfigureAwait(false);
-        if (!result)
+        try
         {
-            return NotFound("User either not found or unable to update.");
+            var result = await _userService.UpdateUser(request, token).ConfigureAwait(false);
+            if (!result)
+            {
+                return NotFound("User either not found or unable to update.");
+            }
+            return Ok(result);
         }
+        catch (Exception ex)
+        {
+            return BadRequest(new CustomException
+            {
+                ErrorMessage = ex.Message,
+                ErrorCode = 400
+            });
 
-        return Ok(result);
+        }
     }
 }
