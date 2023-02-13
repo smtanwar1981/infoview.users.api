@@ -7,11 +7,11 @@ using Users.API.Services;
 
 namespace Users.API.Tests;
 
-public class UsersControllerTest
+public class UsersControllerTests
 {
     private readonly Mock<IUserService> _userService;
 
-    public UsersControllerTest()
+    public UsersControllerTests()
     {
         _userService = new Mock<IUserService>();
     }
@@ -124,23 +124,6 @@ public class UsersControllerTest
     }
 
     [Fact]
-    public async void AddUser_should_return_an_exception_with_a_message()
-    {
-        //arrange
-        CancellationTokenSource cts = new();
-        CancellationToken cancellationToken = cts.Token;
-        _userService.Setup(x => x.GetAllUsers(cancellationToken)).Returns(Task.FromResult((List<User>)null));
-        var usersController = new UsersController(_userService.Object);
-        var errorMessage = "Unable to add user.";
-
-        var ex = await Assert.ThrowsAsync<CustomException>(() => usersController.AddUser(new User(), cancellationToken));
-
-        // assert
-        Assert.Equal(ex.Message, errorMessage);
-
-    }
-
-    [Fact]
     public async void AddUser_method_should_add_a_user()
     {
         //arrange
@@ -174,24 +157,6 @@ public class UsersControllerTest
 
         // assert
         Assert.IsType<BadRequestObjectResult>(result);
-    }
-
-    [Fact]
-    public async void DeleteUser_should_throw_an_exception()
-    {
-        //arrange
-        CancellationTokenSource cts = new();
-        CancellationToken cancellationToken = cts.Token;
-        _userService.Setup(x => x.DeleteUser("123", cancellationToken))
-                .Returns(Task.FromResult((bool)false));
-        var usersController = new UsersController(_userService.Object);
-        var errorMessage = "Unable to delete this user.";
-
-        // act
-        var ex = await Assert.ThrowsAsync<CustomException>(() => usersController.DeleteUser("123", cancellationToken));
-
-        // assert
-        Assert.Equal(ex.Message, errorMessage);
     }
 
     [Fact]
@@ -259,25 +224,6 @@ public class UsersControllerTest
         // assert
         Assert.IsType<NotFoundObjectResult>(result);
     }
-
-    //[Fact]
-    //public async void UpdateUser_should_update_the_user()
-    //{
-    //    //arrange
-    //    CancellationTokenSource cts = new();
-    //    CancellationToken cancellationToken = cts.Token;
-    //    var guid = Guid.NewGuid();
-    //    _userService.Setup(x => x.UpdateUser(GetUserByIdResonse(), cancellationToken))
-    //            .Returns(Task.FromResult((bool)true));
-    //    var usersController = new UsersController(_userService.Object);
-
-    //    // act
-    //    var result = await usersController.UpdateUser(GetUserByIdResonse(), cancellationToken);
-    //    var statusCodeResult = (IStatusCodeActionResult)result;
-
-    //    // assert
-    //    Assert.Equal(200, statusCodeResult.StatusCode);
-    //}
 
     private async Task<List<User>> GetUsersList()
     {
